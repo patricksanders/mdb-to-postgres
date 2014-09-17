@@ -5,6 +5,8 @@
 # Filename:		import_mdb.py
 # Description:	Python module to import an Access MDB file into PostgreSQL
 # Author:		pcs <psanders@ispatechnology.com>
+# 
+# Depends on mdb-tools (in the Debian repos). That's unfortunate.
 ###############################################################################
 import os
 import psycopg2
@@ -57,7 +59,8 @@ class import_mdb:
 									   stdout=subprocess.PIPE).communicate()[0]
 		tables = table_names.strip().split('\n')
 		self.replacements = self.replacements + tables
-		print 'Tables:', tables
+		if self.VERBOSE:
+			print 'Tables:', tables
 		return tables
 	
 	def import_db(self, schema_file, table_files):
@@ -70,13 +73,21 @@ class import_mdb:
 		# Drop old database
 		# TODO: Archive old database before dropping
 		try:
+			if self.VERBOSE:
+				print 'Attempting to drop old', database_name, 'database...'
 			cur.execute('DROP DATABASE ' + database_name)
 		except psycopg2.ProgrammingError as e:
+			if self.VERBOSE:
+				print 'Database', database_name, 'not present. Skipping.'
 			pass
 		# Get rid of old user if present
 		try:
+			if self.VERBOSE:
+				print 'Attempting to drop old', database_user, 'user...'
 			cur.execute('DROP USER ' + database_user)
 		except psycopg2.ProgrammingError as e:
+			if self.VERBOSE:
+				print 'User', database_user, 'not present. Skipping.'
 			pass
 		# Create user to own database
 		try:
@@ -98,6 +109,7 @@ class import_mdb:
 		cur.close()
 		con.close()
 
+		# Connect to new database with new user
 		con = psycopg2.connect(dbname=database_name, user=database_user, host='localhost', password=database_password)
 		con.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 		cur = con.cursor()
@@ -107,7 +119,7 @@ class import_mdb:
 				cur.execute(f.read())
 			except psycopg2.ProgrammingError as e:
 				print 'Uh oh!', e
-		# Execute inserts for all tables
+		# Execute inserts for each table
 		for table in table_files:
 			with open(table, 'r') as f:
 				try:
@@ -119,11 +131,12 @@ class import_mdb:
 		return database_name, database_user
 		
 	def replace_with_lower(self, text, terms):
+		'''Replace all instances of a list of words with the lowercase of each word'''
 		for term in terms:
 			expression = re.compile(re.escape(term), re.IGNORECASE)
 			text = expression.sub(term.lower(), text)
 			if self.VERBOSE:
-				print term, '=>', term.lower()
+				print term, 'replaced with', term.lower()
 		return text
 	
 	def write_schema_to_sql(self, db_name):
