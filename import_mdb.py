@@ -92,8 +92,9 @@ class import_mdb:
 		# Create user to own database
 		try:
 			cur.execute('CREATE USER ' + database_user + ' WITH PASSWORD \'' + database_password + '\'')
-			print 'Created user', database_user, 'with password', database_password
+			print 'Created user', database_user
 		except psycopg2.ProgrammingError as e:
+			cur.execute('ALTER USER ' + database_user + ' WITH PASSWORD \'' + database_password + '\'')
 			print 'Uh oh!', e
 		# Create database
 		try:
