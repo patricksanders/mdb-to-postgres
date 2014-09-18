@@ -70,6 +70,7 @@ class import_mdb:
 		con = psycopg2.connect(dbname='postgres', user='postgres', host='localhost', password=database_password)
 		con.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 		cur = con.cursor()
+
 		# Drop old database
 		# TODO: Archive old database before dropping
 		try:
@@ -80,27 +81,32 @@ class import_mdb:
 			if self.VERBOSE:
 				print 'Database', database_name, 'not present. Skipping.'
 			pass
-		# Get rid of old user if present
-		try:
-			if self.VERBOSE:
-				print 'Attempting to drop old', database_user, 'user...'
-			cur.execute('DROP USER ' + database_user)
-		except psycopg2.ProgrammingError as e:
-			if self.VERBOSE:
-				print 'User', database_user, 'not present. Skipping.'
-			pass
+
+		## Get rid of old user if present
+		#try:
+		#	if self.VERBOSE:
+		#		print 'Attempting to drop old', database_user, 'user...'
+		#	cur.execute('DROP USER ' + database_user)
+		#except psycopg2.ProgrammingError as e:
+		#	if self.VERBOSE:
+		#		print 'User', database_user, 'not present. Skipping.'
+		#	pass
+
 		# Create user to own database
 		try:
 			cur.execute('CREATE USER ' + database_user + ' WITH PASSWORD \'' + database_password + '\'')
-			print 'Created user', database_user, 'with password', database_password
+			print 'Created user', database_user
 		except psycopg2.ProgrammingError as e:
+			cur.execute('ALTER USER ' + database_user + ' WITH PASSWORD \'' + database_password + '\'')
 			print 'Uh oh!', e
+
 		# Create database
 		try:
 			cur.execute('CREATE DATABASE ' + database_name + ' OWNER ' + database_user)
 			print 'Created database', database_name, 'with owner', database_user
 		except psycopg2.ProgrammingError as e:
 			print 'Uh oh!', e
+
 		# Grant privileges to user
 		try:
 			cur.execute('GRANT ALL PRIVILEGES ON DATABASE ' + database_name + ' TO ' + database_user)
@@ -113,12 +119,14 @@ class import_mdb:
 		con = psycopg2.connect(dbname=database_name, user=database_user, host='localhost', password=database_password)
 		con.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 		cur = con.cursor()
+
 		# Execute schema sql
 		with open(schema_file, 'r') as f:
 			try:
 				cur.execute(f.read())
 			except psycopg2.ProgrammingError as e:
 				print 'Uh oh!', e
+
 		# Execute inserts for each table
 		for table in table_files:
 			with open(table, 'r') as f:
@@ -126,6 +134,7 @@ class import_mdb:
 					cur.execute(f.read())
 				except psycopg2.ProgrammingError as e:
 					print 'Uh oh!', e
+
 		cur.close()
 		con.close()
 		return database_name, database_user
