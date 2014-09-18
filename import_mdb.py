@@ -8,6 +8,7 @@
 # 
 # Depends on mdb-tools (in the Debian repos). That's unfortunate.
 ###############################################################################
+import datetime
 import os
 import psycopg2
 import re
@@ -15,7 +16,7 @@ import subprocess
 import sys
 
 class import_mdb:
-	VERBOSE = False
+	VERBOSE = True
 	DATABASE_NAME = None
 	MDB_PATH = None
 	PASSWORD = None
@@ -64,6 +65,7 @@ class import_mdb:
 		return tables
 	
 	def import_db(self, schema_file, table_files):
+		date = datetime.date.today().strftime('%Y%m%d')
 		database_name = self.DATABASE_NAME
 		database_user = database_name + '_user'
 		database_password = self.PASSWORD
@@ -72,14 +74,17 @@ class import_mdb:
 		cur = con.cursor()
 
 		# Drop old database
-		# TODO: Archive old database before dropping
 		try:
+			backup_database_name = database_name + '_' + date
 			if self.VERBOSE:
-				print 'Attempting to drop old', database_name, 'database...'
-			cur.execute('DROP DATABASE ' + database_name)
+				print 'Checking for old', database_name, 'database'
+			cur.execute('ALTER DATABASE ' + database_name + ' RENAME TO ' + backup_database_name)
+			if self.VERBOSE:
+				print 'Renamed', database_name, 'database to', backup_database_name
 		except psycopg2.ProgrammingError as e:
 			if self.VERBOSE:
-				print 'Database', database_name, 'not present. Skipping.'
+				print e
+				#print 'Database', database_name, 'not present. Skipping.'
 			pass
 
 		## Get rid of old user if present
@@ -98,7 +103,7 @@ class import_mdb:
 			print 'Created user', database_user
 		except psycopg2.ProgrammingError as e:
 			cur.execute('ALTER USER ' + database_user + ' WITH PASSWORD \'' + database_password + '\'')
-			print 'Uh oh!', e
+			print 'Changed password for user', database_user
 
 		# Create database
 		try:
