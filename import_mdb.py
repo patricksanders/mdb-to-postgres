@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#!/usr/bin/python
 ###############################################################################
 # import_mdb
 # 
@@ -86,16 +86,6 @@ class import_mdb:
 				print e
 				#print 'Database', database_name, 'not present. Skipping.'
 			pass
-
-		## Get rid of old user if present
-		#try:
-		#	if self.VERBOSE:
-		#		print 'Attempting to drop old', database_user, 'user...'
-		#	cur.execute('DROP USER ' + database_user)
-		#except psycopg2.ProgrammingError as e:
-		#	if self.VERBOSE:
-		#		print 'User', database_user, 'not present. Skipping.'
-		#	pass
 
 		# Create user to own database
 		try:
