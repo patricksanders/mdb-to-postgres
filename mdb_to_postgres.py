@@ -1,4 +1,4 @@
-import import_mdb
+from import_mdb import import_mdb
 import os
 from flask import Flask, redirect, render_template, request, send_from_directory, url_for
 from werkzeug import secure_filename
@@ -24,9 +24,11 @@ def index():
 		db_admin_password = request.values['inputAdminPassword']
 		if db_file and allowed_file(db_file.filename):
 			filename = secure_filename(db_file.filename)
-			db_file.save(os.path.join(app.config['WORKING_FOLDER'], filename))
+			file_path = os.path.join(app.config['WORKING_FOLDER'], filename)
+			db_file.save(file_path)
 			#return redirect(url_for('uploaded_file', filename=filename))
-			return str(os.path.abspath(filename) + ' ' + db_user + ' ' + db_user_password + ' ' + db_admin_password)
+			result = start_import(file_path, db_user, db_user_password, db_admin_password)
+			return result
 	return render_template('index.html', p=app.config['TEMPLATE_PARAMS'])
 
 @app.route('/uploads/<filename>')
@@ -35,6 +37,9 @@ def uploaded_file(filename):
 
 def start_import(db_file, db_user, db_user_password, db_admin_password):
 	importer = import_mdb(db_file, db_user, db_user_password, db_admin_password)
+	schema_file, table_files = importer.dump()
+	database_name, database_user = importer.import_db(schema_file, table_files)
+	return 'Database ' + database_name + ' created with owner ' + database_user
 
 if __name__ == '__main__':
 	app.run()
