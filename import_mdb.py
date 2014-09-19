@@ -16,7 +16,7 @@ import subprocess
 import sys
 
 class import_mdb:
-	VERBOSE = True
+	VERBOSE = False
 	DATABASE_NAME = None
 	MDB_PATH = None
 	USER_PASSWORD = None
@@ -70,7 +70,8 @@ class import_mdb:
 		database_name = self.DATABASE_NAME
 		database_user = database_name + '_user'
 		database_password = self.USER_PASSWORD
-		con = psycopg2.connect(dbname='postgres', user='postgres', host='localhost', password=database_password)
+		database_admin_password = self.ADMIN_PASSWORD
+		con = psycopg2.connect(dbname='postgres', user='postgres', host='localhost', password=database_admin_password)
 		con.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 		cur = con.cursor()
 
