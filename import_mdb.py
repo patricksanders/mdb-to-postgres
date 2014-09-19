@@ -19,15 +19,16 @@ class import_mdb:
 	VERBOSE = True
 	DATABASE_NAME = None
 	MDB_PATH = None
-	PASSWORD = None
+	USER_PASSWORD = None
+	ADMIN_PASSWORD = None
 	USER = None
 	replacements = []
 	schema_sql_filename = None
 	table_sql_filenames = None
 
-	def __init__(self, mdb_path, db_user, db_password):
+	def __init__(self, mdb_path, db_user, db_user_password, db_admin_password):
 		self.MDB_PATH = os.path.abspath(mdb_path)
-		self.PASSWORD = db_password
+		self.USER_PASSWORD = db_user_password
 		self.USER = db_user
 	
 	def dump(self):
@@ -68,7 +69,7 @@ class import_mdb:
 		date = datetime.date.today().strftime('%Y%m%d')
 		database_name = self.DATABASE_NAME
 		database_user = database_name + '_user'
-		database_password = self.PASSWORD
+		database_password = self.USER_PASSWORD
 		con = psycopg2.connect(dbname='postgres', user='postgres', host='localhost', password=database_password)
 		con.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 		cur = con.cursor()
@@ -175,7 +176,7 @@ class import_mdb:
 
 if __name__ == '__main__':
 	print 'Welcome to import_mdb'
-	importer = import_mdb(sys.argv[1], sys.argv[2], sys.argv[3])
+	importer = import_mdb(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
 	print 'Starting dump...'
 	schema_file, table_files = importer.dump()
 	database_name, database_user = importer.import_db(schema_file, table_files)
