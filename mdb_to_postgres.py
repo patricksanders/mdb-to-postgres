@@ -19,16 +19,15 @@ def allowed_file(filename):
 def index():
 	if request.method == 'POST':
 		db_file = request.files['file']
-		db_user = request.values['inputUser']
-		db_user_password = request.values['inputUserPassword']
-		db_admin_password = request.values['inputAdminPassword']
+		db_user = request.values.get('inputUser')
+		db_user_password = request.values.get('inputUserPassword')
+		db_admin_password = request.values.get('inputAdminPassword')
 		if db_file and allowed_file(db_file.filename):
 			filename = secure_filename(db_file.filename)
 			file_path = os.path.join(app.config['WORKING_FOLDER'], filename)
 			db_file.save(file_path)
-			#return redirect(url_for('uploaded_file', filename=filename))
 			result = start_import(file_path, db_user, db_user_password, db_admin_password)
-			return result
+			return render_template('result.html', p=app.config['TEMPLATE_PARAMS'], result=result)
 	return render_template('index.html', p=app.config['TEMPLATE_PARAMS'])
 
 @app.route('/uploads/<filename>')
