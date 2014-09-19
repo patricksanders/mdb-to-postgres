@@ -148,8 +148,8 @@ class import_mdb:
 		return text
 	
 	def write_schema_to_sql(self, db_name):
-		schema_file = 'schema_' + db_name.lower() + '.sql'
-		with open(os.path.join(self.working_dir, schema_file), 'w') as f:
+		schema_file = os.path.join(self.working_dir, 'schema_' + db_name.lower() + '.sql')
+		with open(schema_file, 'w') as f:
 			print 'Extracting schema...'
 			schema = subprocess.Popen(['mdb-schema', self.MDB_PATH, 'postgres'],
 									  stdout=subprocess.PIPE).communicate()[0]
@@ -165,10 +165,10 @@ class import_mdb:
 		table_files = []
 		for table in tables:
 			if table != '':
-				filename = 'table_' + table.lower() + '.sql'
+				filename = os.path.join(self.working_dir, 'table_' + table.lower() + '.sql')
 				table_files = table_files + [filename]
 				print 'Dumping', table
-				with open(os.path.join(self.working_dir, filename), 'w') as f:
+				with open(filename, 'w') as f:
 					insert_statements = subprocess.Popen(['mdb-export', '-I', 'postgres', '-q', '\'', self.MDB_PATH, table],
 												stdout=subprocess.PIPE).communicate()[0]
 					insert_statements = self.replace_with_lower(insert_statements, self.replacements)
