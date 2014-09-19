@@ -1,0 +1,16 @@
+{% extends "main.html" %}
+{% block content %}
+	<h1>{{ p.site_title }}</h1>
+	<p class="lead">{{ result }}</p>
+	<p class="text-left">Detailed results:<br />
+		<pre class="text-left"><code>{{ detail }}</code></pre>
+	</p>
+{% endblock %}
+
+{% block script %}
+<script type="text/javascript">
+$('input[id=lefile]').change(function() {
+	$('#inputDbFile').val($(this).val());
+});
+</script>
+{% endblock %}
