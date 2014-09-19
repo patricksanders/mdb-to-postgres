@@ -26,8 +26,8 @@ def index():
 			filename = secure_filename(db_file.filename)
 			file_path = os.path.join(app.config['WORKING_FOLDER'], filename)
 			db_file.save(file_path)
-			result = start_import(file_path, db_user, db_user_password, db_admin_password)
-			return render_template('result.html', p=app.config['TEMPLATE_PARAMS'], result=result)
+			result, detail = start_import(file_path, db_user, db_user_password, db_admin_password)
+			return render_template('result.html', p=app.config['TEMPLATE_PARAMS'], result=result, detail=detail)
 	return render_template('index.html', p=app.config['TEMPLATE_PARAMS'])
 
 @app.route('/uploads/<filename>')
@@ -37,8 +37,9 @@ def uploaded_file(filename):
 def start_import(db_file, db_user, db_user_password, db_admin_password):
 	importer = import_mdb(db_file, db_user, db_user_password, db_admin_password)
 	schema_file, table_files = importer.dump()
-	database_name, database_user = importer.import_db(schema_file, table_files)
-	return 'Database ' + database_name + ' created with owner ' + database_user
+	database_name, database_user, detail = importer.import_db(schema_file, table_files)
+	overview = 'Database ' + database_name + ' created with owner ' + database_user
+	return overview, detail
 
 if __name__ == '__main__':
 	app.run()
