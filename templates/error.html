@@ -1,8 +1,8 @@
 {% extends "main.html" %}
 {% block content %}
     <div class="container">
-		<h1>Error</h1>
-		<p class="lead">{{ error }}</p>
+		<h1 class="text-danger">Error</h1>
+		<p class="lead text-danger">{{ error }}</p>
 		<p><a href="{{ p.site_url }}">Click here</a> to go back to the main page.</p>
 		<p class="text-left">Details:
 			<pre class="text-left">{{ description }}</pre>

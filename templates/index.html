@@ -7,11 +7,11 @@
 			<form role="form" method="post" action="/" enctype="multipart/form-data" name="submit">
 				<div class="form-group">
 					<label for="inputDbFile">Database file</label>
-					<input id="lefile" type="file" name="file" style="display:none">
+					<input id="file-hidden" type="file" name="file" style="display:none">
 					<div class="input-group" id="inputDbFileGrp">
 						<input id="inputDbFile" class="form-control" type="text" required>
 						<span class="input-group-btn">
-							<a class="btn btn-primary" onclick="$('input[id=lefile]').click();">Browse</a>
+							<a class="btn btn-primary" onclick="$('input[id=file-hidden]').click();">Browse</a>
 						</span>
 					</div>
 				</div>
@@ -41,7 +41,7 @@
 
 {% block script %}
 <script type="text/javascript">
-$('input[id=lefile]').change(function() {
+$('input[id=file-hidden]').change(function() {
 	$('#inputDbFile').val($(this).val());
 });
 </script>

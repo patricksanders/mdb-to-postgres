@@ -15,8 +15,12 @@ body > .container {
   padding-left: 15px;
 }
 
-code {
+pre {
   font-size: 80%;
+}
+
+.alert {
+  margin-bottom: 75px;
 }
 
 /* Sticky footer styles
