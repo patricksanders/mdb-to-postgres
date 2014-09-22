@@ -1,10 +1,12 @@
 {% extends "main.html" %}
 {% block content %}
-	<h1>Error</h1>
-	<p class="lead">{{ error }}</p>
-	<p><a href="{{ p.site_url }}">Click here</a> to go back to the main page.</p>
-	<p class="text-left">Details:
-		<pre class="text-left">{{ description }}</pre>
-	</p>
+    <div class="container">
+		<h1>Error</h1>
+		<p class="lead">{{ error }}</p>
+		<p><a href="{{ p.site_url }}">Click here</a> to go back to the main page.</p>
+		<p class="text-left">Details:
+			<pre class="text-left">{{ description }}</pre>
+		</p>
+	</div>
 {% endblock %}
 
