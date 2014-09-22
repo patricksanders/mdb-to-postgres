@@ -3,11 +3,7 @@ import os
 from flask import Flask, redirect, render_template, request, send_from_directory, url_for
 from werkzeug import secure_filename
 
-DEBUG = True
-UPLOAD_FOLDER = './working'
 ALLOWED_EXTENSIONS = set(['mdb'])
-
-template_params = {'site_title': 'MDB Importer'}
 
 app = Flask(__name__)
 app.config.from_object('default_settings')
