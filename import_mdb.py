@@ -77,8 +77,8 @@ class import_mdb:
 								   user='postgres',
 								   host='localhost',
 								   password=database_admin_password)
-		except psycopg2.OperationalError:
-			raise Exception('Authentication error. Please check the password for the database administrator.')
+		except psycopg2.OperationalError as e: # thrown on bad password, maybe other things?
+			raise Exception('Authentication error. Please check the password for the database administrator.', e)
 		con.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 		cur = con.cursor()
 
