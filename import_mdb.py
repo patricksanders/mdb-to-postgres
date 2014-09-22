@@ -71,7 +71,10 @@ class import_mdb:
 		database_user = database_name + '_user'
 		database_password = self.USER_PASSWORD
 		database_admin_password = self.ADMIN_PASSWORD
-		con = psycopg2.connect(dbname='postgres', user='postgres', host='localhost', password=database_admin_password)
+		con = psycopg2.connect(dbname='postgres',
+							   user='postgres',
+							   host='localhost',
+							   password=database_admin_password)
 		con.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 		cur = con.cursor()
 
@@ -79,7 +82,8 @@ class import_mdb:
 		try:
 			backup_database_name = database_name + '_' + date
 			self.log('Checking for old ' + database_name + '  database')
-			cur.execute('ALTER DATABASE ' + database_name + ' RENAME TO ' + backup_database_name)
+			cur.execute('ALTER DATABASE ' + database_name + 
+						' RENAME TO ' + backup_database_name)
 			self.log('Renamed old ' + database_name + ' database to ' + backup_database_name)
 		except psycopg2.ProgrammingError as e:
 			self.log(str(e))
@@ -87,29 +91,36 @@ class import_mdb:
 
 		# Create user to own database
 		try:
-			cur.execute('CREATE USER ' + database_user + ' WITH PASSWORD \'' + database_password + '\'')
+			cur.execute('CREATE USER ' + database_user + 
+						' WITH PASSWORD \'' + database_password + '\'')
 			self.log('Created user ' + database_user)
 		except psycopg2.ProgrammingError as e:
-			cur.execute('ALTER USER ' + database_user + ' WITH PASSWORD \'' + database_password + '\'')
+			cur.execute('ALTER USER ' + database_user + 
+						' WITH PASSWORD \'' + database_password + '\'')
 			self.log('Changed password for user ' + database_user)
 
 		# Create database
 		try:
-			cur.execute('CREATE DATABASE ' + database_name + ' OWNER ' + database_user)
+			cur.execute('CREATE DATABASE ' + database_name + 
+						' OWNER ' + database_user)
 			self.log('Created database ' + database_name + ' with owner ' + database_user)
 		except psycopg2.ProgrammingError as e:
 			self.log('Uh oh! ' + str(e))
 
 		# Grant privileges to user
 		try:
-			cur.execute('GRANT ALL PRIVILEGES ON DATABASE ' + database_name + ' TO ' + database_user)
+			cur.execute('GRANT ALL PRIVILEGES ON DATABASE ' + database_name + 
+					    ' TO ' + database_user)
 		except psycopg2.ProgrammingError as e:
 			self.log('Uh oh! ' + str(e))
 		cur.close()
 		con.close()
 
 		# Connect to new database with new user
-		con = psycopg2.connect(dbname=database_name, user=database_user, host='localhost', password=database_password)
+		con = psycopg2.connect(dbname=database_name,
+							   user=database_user,
+							   host='localhost',
+							   password=database_password)
 		con.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 		cur = con.cursor()
 
