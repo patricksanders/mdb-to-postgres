@@ -30,6 +30,7 @@ class import_mdb:
 	def __init__(self, mdb_path, db_user, db_user_password, db_admin_password):
 		self.MDB_PATH = os.path.abspath(mdb_path)
 		self.USER_PASSWORD = db_user_password
+		self.ADMIN_PASSWORD = db_admin_password
 		self.USER = db_user
 		self.working_dir = os.path.dirname(mdb_path)
 	
@@ -71,10 +72,13 @@ class import_mdb:
 		database_user = database_name + '_user'
 		database_password = self.USER_PASSWORD
 		database_admin_password = self.ADMIN_PASSWORD
-		con = psycopg2.connect(dbname='postgres',
-							   user='postgres',
-							   host='localhost',
-							   password=database_admin_password)
+		try:
+			con = psycopg2.connect(dbname='postgres',
+								   user='postgres',
+								   host='localhost',
+								   password=database_admin_password)
+		except psycopg2.OperationalError:
+			raise Exception('Authentication error. Please check the password for the database administrator.')
 		con.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 		cur = con.cursor()
 
@@ -180,8 +184,14 @@ class import_mdb:
 				table_files = table_files + [filename]
 				self.log('Dumping ' + table + ' table...')
 				with open(filename, 'w') as f:
-					insert_statements = subprocess.Popen(['mdb-export', '-I', 'postgres', '-q', '\'', self.MDB_PATH, table],
-												stdout=subprocess.PIPE).communicate()[0]
+					insert_statements = subprocess.Popen(['mdb-export', 
+														  '-I',
+														  'postgres',
+														  '-q',
+														  '\'',
+														  self.MDB_PATH,
+														  table],
+														  stdout=subprocess.PIPE).communicate()[0]
 					insert_statements = self.replace_with_lower(insert_statements, self.replacements)
 					f.write(insert_statements)
 					f.write('\n')
