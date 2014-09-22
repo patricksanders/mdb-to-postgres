@@ -24,11 +24,18 @@ def index():
 			db_file.save(file_path)
 			try:
 				result, detail = start_import(file_path, db_user, db_user_password, db_admin_password)
-				return render_template('result.html', p=app.config['TEMPLATE_PARAMS'], result=result, detail=detail)
+				return render_template('result.html',
+									   p=app.config['TEMPLATE_PARAMS'],
+									   result=result,
+									   detail=detail)
 			except Exception as e:
 				friendly, unfriendly = e.args
-				return render_template('error.html', error=friendly, description=unfriendly, p=app.config['TEMPLATE_PARAMS'])
-	return render_template('index.html', p=app.config['TEMPLATE_PARAMS'])
+				return render_template('error.html',
+									   error=friendly,
+									   description=unfriendly,
+									   p=app.config['TEMPLATE_PARAMS'])
+	return render_template('index.html',
+						   p=app.config['TEMPLATE_PARAMS'])
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
