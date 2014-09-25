@@ -1,5 +1,6 @@
 from import_mdb import import_mdb
 import os
+import traceback
 from flask import Flask, redirect, render_template, request, send_from_directory, url_for
 from werkzeug import secure_filename
 
@@ -17,18 +18,20 @@ def index():
 def submit():
 	raw_filename = request.values.get('inputDbFile')
 	db_filename = secure_filename(raw_filename)
-	db_user = request.values.get('inputUser')
+	db_user_username = request.values.get('inputUser')
 	db_user_password = request.values.get('inputUserPassword')
 	db_admin_password = request.values.get('inputAdminPassword')
+	db_admin_username = request.values.get('inputAdminUser')
+	db_host = request.values.get('inputHost')
+	db_port = request.values.get('inputPort')
 	try:
-		result, detail = start_import(db_filename, db_user, db_user_password, db_admin_password)
+		result, detail = start_import(db_filename, db_user_username, db_user_password, db_admin_password, db_admin_username, db_host, db_port)
 		return render_template('result.html',
 							   p=app.config['TEMPLATE_PARAMS'],
 							   result=result,
 							   detail=detail)
 	except Exception as e:
-		#friendly, unfriendly = e.args
-		unfriendly = e.args
+		unfriendly = traceback.format_exc()
 		return render_template('error.html',
 							   #error=friendly,
 							   description=unfriendly,
@@ -52,14 +55,14 @@ def upload():
 def allowed_file(filename):
 	return '.' in filename and filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
-def start_import(db_file, db_user, db_user_password, db_admin_password):
-	importer = import_mdb(db_file, db_user, db_user_password, db_admin_password)
-	schema_file, table_files = importer.dump()
+def start_import(db_file, db_username, db_user_password, db_admin_password, db_admin_username, db_host, db_port):
+	importer = import_mdb(db_file, db_username, db_user_password, db_admin_password, db_admin_username, db_host, db_port)
+	importer.dump()
 	try:
-		database_name, database_user, detail = importer.import_db(schema_file, table_files)
+		database_name, database_user, detail = importer.import_db()
 		overview = 'Database ' + database_name + ' created with owner ' + database_user
 		return overview, detail
-	except Exception:
+	except Exception as e:
 		raise
 
 if __name__ == '__main__':

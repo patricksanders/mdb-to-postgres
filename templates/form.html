@@ -13,7 +13,7 @@
 					<div class="input-group" id="inputDbFileGrp">
 						<input id="inputDbFile" name="inputDbFile" class="form-control" type="text" required>
 						<span class="input-group-btn">
-							<a id="browseButton" class="btn btn-md btn-info" onclick="$('input[id=fileupload]').click();">Browse</a>
+							<a id="browseButton" class="btn btn-md btn-info" onclick="$('input[id=fileupload]').click();"><i class="fa fa-folder-o fa-sm"></i> Browse</a>
 						</span>
 					</div>
 				</div>
@@ -23,21 +23,47 @@
 					<p class="help-block">This user will have ownership of the imported database</p>
 				</div>
 				<div class="form-group">
-					<label for="inputUserPassword">Database user password</label>
+					<label for="inputUserPassword">User password</label>
 					<input type="password" class="form-control" id="inputUserPassword" name="inputUserPassword" placeholder="User Password" required>
 					<p class="help-block">Password to be used for the new database user</p>
 				</div>
 				<div class="form-group">
-					<label for="inputAdminPassword">Database admin password</label>
+					<label for="inputAdminPassword">Admin password</label>
 					<input type="password" class="form-control" id="inputAdminPassword" name="inputAdminPassword" placeholder="Admin Password" required>
-					<p class="help-block">Password for the existing postgres admin</p>
+					<p class="help-block">Password for the existing PostgreSQL administrative user</p>
+				</div>
+				<div class="panel-group" id="accordion">
+					<div class="panel-heading">
+					  <span class="panel-title">
+						<a data-toggle="collapse" data-parent="#accordion" href="#advanced">
+						  <small><i class="fa fa-cog fa-sm"></i> Advanced Options</small>
+						</a>
+					  </span>
+					</div>
+					<div id="advanced" class="panel-collapse collapse">
+					  <div class="panel-body">
+						<div class="form-group">
+							<label for="inputAdminUser">Admin user</label>
+							<input type="text" class="form-control" id="inputAdminUser" name="inputAdminUser" value="postgres" required>
+							<p class="help-block">The existing PostgeSQL administrative user</p>
+						</div>
+						<div class="form-group">
+							<label for="inputHost">Database host</label>
+							<input type="text" class="form-control" id="inputHost" name="inputHost" value="localhost" required>
+						</div>
+						<div class="form-group">
+							<label for="inputPort">Database port</label>
+							<input type="text" class="form-control" id="inputPort" name="inputPort" value="5432" required>
+						</div>
+					  </div>
+					</div>
 				</div>
 				<button id="submitButton" type="submit" class="btn btn-info" disabled>Submit</button>
 			</form>
 		</div>
 	</div>
 	<div class="container col-md-8 col-md-offset-2">
-		<div class="alert alert-warning" role="alert"><span class="glyphicon glyphicon-warning-sign"></span> <strong>Warning!</strong> Existing database will be renamed and replaced with data from the uploaded MDB file.</div>
+		<div class="alert alert-warning" role="alert"><i class="fa fa-warning fa-lg"></i> <strong>Warning!</strong> Existing database will be renamed and replaced with data from the uploaded MDB file.</div>
     </div>
 {% endblock %}
 
@@ -72,6 +98,7 @@ $(function () {
 			var progress = parseInt(data.loaded / data.total * 100, 10);
 			console.log(progress);
 			$('#progress .progress-bar').css('width', progress + '%').attr('aria-valuenow', progress);
+			$('#progress .progress-bar').innerHTML = progress + '%';
 		}
     });
 });
