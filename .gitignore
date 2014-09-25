@@ -2,3 +2,7 @@
 *.mdb
 *.sql
 *.zip
+static/bootstrap
+static/font-awesome
+static/jquery
+
