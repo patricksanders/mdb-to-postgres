@@ -7,7 +7,14 @@
 # Author:		pcs <psanders@ispatechnology.com>
 # 
 # Depends on mdb-tools (in the Debian repos). That's unfortunate.
+# 
+# Usage:
+# importer = import_mdb(db_file, db_username, db_user_password, \
+#						db_admin_password, db_admin_username, db_host, \
+#						db_port, working_folder)
+# importer.start_import()
 ###############################################################################
+
 import datetime
 import os
 import psycopg2
@@ -41,6 +48,20 @@ class import_mdb:
 		self._database_host = db_host
 		self._database_port = db_port
 		self._working_dir = working_dir
+	
+	def cleanup_schema(self, text, terms):
+		'''Replace all instances of a list of words with the
+		lowercase of each word
+		'''
+		if text.startswith('ALTER TABLE') or text.startswith('CREATE INDEX') or text.startswith('CREATE UNIQUE INDEX'):
+			return '\n'
+		else:
+			for term in terms:
+				# find and replace term with lowercase
+				expression = re.compile(re.escape(term), re.IGNORECASE)
+				text = expression.sub(term.lower(), text)
+				self.log(term + ' replaced with ' + term.lower())
+			return text
 	
 	def dump_tables_to_db(self, tables, cursor):
 		'''Dump each table in mdb to sql file'''
@@ -78,12 +99,80 @@ class import_mdb:
 		self.log('Tables: ' + str(tables))
 		return tables
 	
-	def import_db(self):
-		self.log('MDB is ' + self._mdb_path)
+	def log(self, text):
+		self.log_output = self.log_output + text + '\n'
+
+	def prepare_database(self, cursor):
 		date = datetime.datetime.today().strftime('%Y%m%d%H%M')
+
+		try:
+			backup_database_name = self._database_name + '_' + date
+			self.log('Checking for old ' + self._database_name + '  database')
+			cursor.execute('ALTER DATABASE ' + self._database_name + 
+						   ' RENAME TO ' + backup_database_name)
+			self.log('Renamed old ' + self._database_name + ' database to ' + backup_database_name)
+		except psycopg2.ProgrammingError as e:
+			self.log(str(e))
+			self.log(traceback.format_exc())
+			pass
+
+		# Create user to own database
+		try:
+			cursor.execute('CREATE USER ' + self._database_user + 
+						' WITH PASSWORD \'' + self._user_password + '\'')
+			self.log('Created user ' + self._database_user)
+		except psycopg2.ProgrammingError as e:
+			cursor.execute('ALTER USER ' + self._database_user + 
+						' WITH PASSWORD \'' + self._user_password + '\'')
+			self.log('Changed password for user ' + self._database_user)
+
+		# Create database
+		try:
+			cursor.execute('CREATE DATABASE ' + self._database_name + 
+						' OWNER ' + self._database_user)
+			self.log('Created database ' + self._database_name + ' with owner ' + self._database_user)
+		except psycopg2.ProgrammingError as e:
+			self.log('Uh oh! ' + str(e))
+			self.log(traceback.format_exc())
+
+		# Grant privileges to user
+		try:
+			cursor.execute('GRANT ALL PRIVILEGES ON DATABASE ' + self._database_name + 
+						' TO ' + self._database_user)
+		except psycopg2.ProgrammingError as e:
+			self.log('Uh oh! ' + str(e))
+			self.log(traceback.format_exc())
+		
+	def run_insert(self, text, cursor):
+		'''Prepare and run each insert statement
+		Preparation is for case correction
+		'''
+		# regex for converting table and field names to lowercase
+		expression = re.compile('^INSERT INTO "([a-z]+)" \((.*)\) VALUES')
+		# replace table name with lower
+		text = re.sub(expression, lambda x: x.group(0).lower(), text)
+		# replace field name with lower
+		text = re.sub(expression, lambda x: x.group(1).lower(), text)
+		try:
+			# execute insert statement
+			cursor.execute(text)
+			#self.log('ran insert: ' + text)
+		except psycopg2.ProgrammingError as e:
+			# some sort of syntax error
+			self.log('Uh oh! ' + str(e))
+			self.log(traceback.format_exc())
+		except psycopg2.IntegrityError as e:
+			# thrown if there's a problem with duplicate primary keys or other constraints
+			self.log('Uh oh! ' + str(e))
+			self.log(traceback.format_exc())
+	
+	def start_import(self):
+		self.log('MDB is ' + self._mdb_path)
+
 		mdb_path = self._mdb_path
 		db_name = os.path.split(mdb_path)[1].strip('.mdb')
 		self._database_name = db_name.lower()
+
 		self._replacements = self._replacements + self.get_replacements()
 		self.schema_sql_filename = self.write_schema_to_sql()
 
@@ -100,43 +189,7 @@ class import_mdb:
 
 		# Drop old database
 		try:
-			try:
-				backup_database_name = self._database_name + '_' + date
-				self.log('Checking for old ' + self._database_name + '  database')
-				cur.execute('ALTER DATABASE ' + self._database_name + 
-							' RENAME TO ' + backup_database_name)
-				self.log('Renamed old ' + self._database_name + ' database to ' + backup_database_name)
-			except psycopg2.ProgrammingError as e:
-				self.log(str(e))
-				self.log(traceback.format_exc())
-				pass
-
-			# Create user to own database
-			try:
-				cur.execute('CREATE USER ' + self._database_user + 
-							' WITH PASSWORD \'' + self._user_password + '\'')
-				self.log('Created user ' + self._database_user)
-			except psycopg2.ProgrammingError as e:
-				cur.execute('ALTER USER ' + self._database_user + 
-							' WITH PASSWORD \'' + self._user_password + '\'')
-				self.log('Changed password for user ' + self._database_user)
-
-			# Create database
-			try:
-				cur.execute('CREATE DATABASE ' + self._database_name + 
-							' OWNER ' + self._database_user)
-				self.log('Created database ' + self._database_name + ' with owner ' + self._database_user)
-			except psycopg2.ProgrammingError as e:
-				self.log('Uh oh! ' + str(e))
-				self.log(traceback.format_exc())
-
-			# Grant privileges to user
-			try:
-				cur.execute('GRANT ALL PRIVILEGES ON DATABASE ' + self._database_name + 
-							' TO ' + self._database_user)
-			except psycopg2.ProgrammingError as e:
-				self.log('Uh oh! ' + str(e))
-				self.log(traceback.format_exc())
+			self.prepare_database(cur)
 		except:
 			raise
 		finally:
@@ -170,46 +223,6 @@ class import_mdb:
 			cur.close()
 			con.close()
 		return self._database_name, self._database_user, self.log_output
-	
-	def log(self, text):
-		self.log_output = self.log_output + text + '\n'
-		
-	def cleanup_schema(self, text, terms):
-		'''Replace all instances of a list of words with the
-		lowercase of each word
-		'''
-		if text.startswith('ALTER TABLE') or text.startswith('CREATE INDEX') or text.startswith('CREATE UNIQUE INDEX'):
-			return '\n'
-		else:
-			for term in terms:
-				# find and replace term with lowercase
-				expression = re.compile(re.escape(term), re.IGNORECASE)
-				text = expression.sub(term.lower(), text)
-				self.log(term + ' replaced with ' + term.lower())
-			return text
-	
-	def run_insert(self, text, cursor):
-		'''Prepare and run each insert statement
-		Preparation is for case correction
-		'''
-		# regex for converting table and field names to lowercase
-		expression = re.compile('^INSERT INTO "([a-z]+)" \((.*)\) VALUES')
-		# replace table name with lower
-		text = re.sub(expression, lambda x: x.group(0).lower(), text)
-		# replace field name with lower
-		text = re.sub(expression, lambda x: x.group(1).lower(), text)
-		try:
-			# execute insert statement
-			cursor.execute(text)
-			#self.log('ran insert: ' + text)
-		except psycopg2.ProgrammingError as e:
-			# some sort of syntax error
-			self.log('Uh oh! ' + str(e))
-			self.log(traceback.format_exc())
-		except psycopg2.IntegrityError as e:
-			# thrown if there's a problem with duplicate primary keys or other constraints
-			self.log('Uh oh! ' + str(e))
-			self.log(traceback.format_exc())
 	
 	def write_schema_to_sql(self):
 		schema_file = os.path.abspath(os.path.join(self._working_dir, 'schema_' + self._database_name + '.sql'))
