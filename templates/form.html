@@ -7,7 +7,7 @@
 		</span>
 		<div class="text-left col-md-6 col-md-offset-3">
 			<input id="fileupload" type="file" name="file" style="display:none">
-			<form role="form" method="post" action="/submit" enctype="multipart/form-data" name="submit">
+			<form role="form" method="post" action="{{ p.site_url }}/submit" enctype="multipart/form-data" name="submit">
 				<div class="form-group">
 					<label for="inputDbFileGrp">Database file</label>
 					<div class="input-group" id="inputDbFileGrp">
@@ -81,7 +81,7 @@ $(function () {
     $('#fileupload').fileupload({
         dataType: 'json',
 		//autoUpload: false,
-		url: '/upload',
+		url: '{{ p.site_url }}/upload',
 		start: function (e, data) {
 			$("#lead-area").html("<div class='container col-md-8 col-md-offset-2'><div class='progress' id='progress'><div class='progress-bar progress-bar-info' role='progressbar' aria-valuenow='0' aria-valuemin='0' aria-valuemax='100'></div></div></div>");
 			$("#inputDbFile").attr("readonly", "readonly");
