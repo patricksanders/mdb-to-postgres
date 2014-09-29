@@ -22,6 +22,7 @@ import re
 import subprocess
 import sys
 import traceback
+import uuid
 
 class import_mdb:
 	_database_name = None
@@ -32,12 +33,26 @@ class import_mdb:
 	_admin_user = None
 	_database_host = None
 	_database_port = None
+	_finished = False
 	_replacements = []
+	_uuid = None
 	_working_dir = None
 	schema_sql_filename = None
 	table_sql_filenames = None
 	log_output = ''
 
+	@property
+	def finished(self):
+		return self._finished
+
+	@property
+	def log_text(self):
+		return self.log_output
+
+	@property
+	def uuid(self):
+		return self._uuid
+	
 	def __init__(self, mdb_path, db_user_username, db_user_password, db_admin_password, db_admin_username, db_host, db_port, working_dir):
 		# assign values to instance variables
 		self._mdb_path = os.path.abspath(os.path.join(working_dir, mdb_path))
@@ -48,6 +63,7 @@ class import_mdb:
 		self._database_host = db_host
 		self._database_port = db_port
 		self._working_dir = working_dir
+		self._uuid = uuid.uuid4()
 	
 	def cleanup_schema(self, text, terms):
 		'''Replace all instances of a list of words with the
@@ -221,6 +237,10 @@ class import_mdb:
 		finally:
 			cur.close()
 			con.close()
+		
+		self._finished = True
+		self.log('Done.')
+
 		return self._database_name, self._database_user, self.log_output
 	
 	def write_schema_to_sql(self):

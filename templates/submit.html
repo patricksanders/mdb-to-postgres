@@ -1,0 +1,30 @@
+{% extends "main.html" %}
+{% block content %}
+    <div class="container">
+		<h1 id="header" class="text-info">Submitted</h1>
+		<p id="lead" class="lead">The import has been started. This may take a while.</p>
+		<p class="text-left">Details:
+			<pre id="logOutput" class="text-left"></pre>
+		</p>
+	</div>
+{% endblock %}
+
+{% block script %}
+<script type=text/javascript>
+var timeout;
+function checkStatus(){
+  $.get('{{ p.site_url }}/_status', {
+	uuid: '{{ uuid }}'
+  }, function(data) {
+	$("#logOutput").text(data.log);
+	timeout = setTimeout(checkStatus,5000);
+	if (data.finished) {
+		clearTimeout(timeout);
+		$("#header").text("Import complete.").attr("class", "text-success");
+		$("#lead").text("");
+	}
+  });
+}
+checkStatus();
+</script>
+{% endblock %}
