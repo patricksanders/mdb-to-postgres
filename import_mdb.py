@@ -107,13 +107,12 @@ class import_mdb:
 
 		try:
 			backup_database_name = self._database_name + '_' + date
-			self.log('Checking for old ' + self._database_name + '  database')
+			self.log('Checking for old ' + self._database_name + ' database')
 			cursor.execute('ALTER DATABASE ' + self._database_name + 
 						   ' RENAME TO ' + backup_database_name)
 			self.log('Renamed old ' + self._database_name + ' database to ' + backup_database_name)
 		except psycopg2.ProgrammingError as e:
-			self.log(str(e))
-			self.log(traceback.format_exc())
+			self.log(str(e)) # "database doesn't exist"
 			pass
 
 		# Create user to own database
