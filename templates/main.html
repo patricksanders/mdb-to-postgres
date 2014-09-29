@@ -15,13 +15,13 @@
 	<link href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="//maxcdn.bootstrapcdn.com/bootswatch/3.2.0/flatly/bootstrap.min.css" rel="stylesheet">
     <link href="//maxcdn.bootstrapcdn.com/bootswatch/3.2.0/simplex/bootstrap.min.css" rel="stylesheet">
-    <link href="http://localhost:5000/static/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ p.site_url }}/static/bootstrap/css/bootstrap.min.css" rel="stylesheet">
 	-->
     <link href="//maxcdn.bootstrapcdn.com/bootswatch/3.2.0/flatly/bootstrap.min.css" rel="stylesheet">
-    <link href="http://localhost:5000/static/font-awesome/css/font-awesome.min.css" rel="stylesheet">
+    <link href="{{ p.site_url }}/static/font-awesome/css/font-awesome.min.css" rel="stylesheet">
 
     <!-- Custom styles for this template -->
-    <link href="http://localhost:5000/static/css/customizations.css" rel="stylesheet">
+    <link href="{{ p.site_url }}/static/css/customizations.css" rel="stylesheet">
 
     <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
@@ -58,8 +58,8 @@
     <!-- Bootstrap core JavaScript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
-    <script src="http://localhost:5000/static/jquery/jquery.min.js"></script>
-    <script src="http://localhost:5000/static/bootstrap/js/bootstrap.min.js"></script>
+    <script src="{{ p.site_url }}/static/jquery/jquery.min.js"></script>
+    <script src="{{ p.site_url }}/static/bootstrap/js/bootstrap.min.js"></script>
 		{% block script %}{% endblock %}
   </body>
 </html>

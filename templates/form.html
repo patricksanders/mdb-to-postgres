@@ -68,9 +68,9 @@
 {% endblock %}
 
 {% block script %}
-<script src="http://localhost:5000/static/js/vendor/jquery.ui.widget.js"></script>
-<script src="http://localhost:5000/static/js/jquery.iframe-transport.js"></script>
-<script src="http://localhost:5000/static/js/jquery.fileupload.js"></script>
+<script src="{{ p.site_url }}/static/js/vendor/jquery.ui.widget.js"></script>
+<script src="{{ p.site_url }}/static/js/jquery.iframe-transport.js"></script>
+<script src="{{ p.site_url }}/static/js/jquery.fileupload.js"></script>
 <script>
 $('input[id=fileupload]').change(function() {
 	$('#inputDbFile').val($(this).val());
