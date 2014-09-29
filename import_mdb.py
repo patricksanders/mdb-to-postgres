@@ -42,13 +42,6 @@ class import_mdb:
 		self._working_dir = working_dir
 	
 	def dump(self):
-		self.log('MDB is ' + self._mdb_path)
-		mdb_path = self._mdb_path
-		db_name = os.path.split(mdb_path)[1].strip('.mdb')
-		self._database_name = db_name.lower()
-		self._replacements = self._replacements + self.get_replacements()
-		self.schema_sql_filename = self.write_schema_to_sql(db_name)
-		self.table_sql_filenames = self.write_tables_to_sql(self.get_table_names())
 		self.log('Schema file => ' + str(self.schema_sql_filename))
 		self.log('Table files => ' + str(self.table_sql_filenames))
 	
@@ -73,9 +66,16 @@ class import_mdb:
 		return tables
 	
 	def import_db(self):
+		self.log('MDB is ' + self._mdb_path)
 		date = datetime.datetime.today().strftime('%Y%m%d%H%M')
+		mdb_path = self._mdb_path
+		db_name = os.path.split(mdb_path)[1].strip('.mdb')
+		self._database_name = db_name.lower()
+		self._replacements = self._replacements + self.get_replacements()
 		database_name = self._database_name
 		database_user = self._database_user
+		self.schema_sql_filename = self.write_schema_to_sql(db_name)
+
 		try:
 			con = psycopg2.connect(dbname='postgres',
 								   user=self._admin_user,
@@ -151,18 +151,8 @@ class import_mdb:
 					self.log('Uh oh! ' + str(e))
 					self.log(traceback.format_exc())
 
-			# Execute inserts for each table
-			for table in self.table_sql_filenames:
-				with open(table, 'r') as f:
-					try:
-						cur.execute(f.read())
-						self.log('Imported table ' + table)
-					except psycopg2.ProgrammingError as e:
-						self.log('Uh oh! ' + str(e))
-						self.log(traceback.format_exc())
-					except psycopg2.IntegrityError as e:
-						self.log('Uh oh! ' + str(e))
-						self.log(traceback.format_exc())
+			self.dump_tables_to_db(self.get_table_names(), cur)
+
 		except:
 			raise
 		finally:
@@ -181,11 +171,19 @@ class import_mdb:
 			self.log(term + ' replaced with ' + term.lower())
 		return text
 	
-	def regex_replace(self, text):
+	def run_insert(self, text, cursor):
 		expression = re.compile('^INSERT INTO "([a-z]+)" \((.*)\) VALUES')
 		text = re.sub(expression, lambda x: x.group(0).lower(), text)
 		text = re.sub(expression, lambda x: x.group(1).lower(), text)
-		return text
+		try:
+			cursor.execute(text)
+			self.log('ran insert: ' + text)
+		except psycopg2.ProgrammingError as e:
+			self.log('Uh oh! ' + str(e))
+			self.log(traceback.format_exc())
+		except psycopg2.IntegrityError as e:
+			self.log('Uh oh! ' + str(e))
+			self.log(traceback.format_exc())
 	
 	def write_schema_to_sql(self, db_name):
 		schema_file = os.path.abspath(os.path.join(self._working_dir, 'schema_' + db_name.lower() + '.sql'))
@@ -200,7 +198,7 @@ class import_mdb:
 			self.log('Schema dumped to ' + schema_file)
 		return schema_file
 
-	def write_tables_to_sql(self, tables):
+	def dump_tables_to_db(self, tables, cursor):
 		'''Dump each table in mdb to sql file'''
 		table_files = []
 		for table in tables:
@@ -208,13 +206,9 @@ class import_mdb:
 				filename = os.path.abspath(os.path.join(self._working_dir, 'table_' + table.lower() + '.sql'))
 				table_files = table_files + [filename]
 				self.log('Dumping ' + table + ' table...')
-				with open(filename, 'w') as f:
-					command = ['mdb-export', '-I', 'postgres', '-q', "'", self._mdb_path, table.lower()]
-					insert_statements = subprocess.Popen(command, stdout=subprocess.PIPE).communicate()[0].split('\n')
-					new_inserts = [self.regex_replace(line) for line in insert_statements]
-					f.writelines(new_inserts)
-					self.log(table + ' dumped to ' + filename)
-		return table_files
+				command = ['mdb-export', '-I', 'postgres', '-q', "'", self._mdb_path, table.lower()]
+				insert_statements = subprocess.Popen(command, stdout=subprocess.PIPE).communicate()[0].strip().split('\n')
+				[self.run_insert(line, cursor) for line in insert_statements]
 
 if __name__ == '__main__':
 	print 'Welcome to import_mdb'
