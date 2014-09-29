@@ -56,7 +56,7 @@ def allowed_file(filename):
 	return '.' in filename and filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
 def start_import(db_file, db_username, db_user_password, db_admin_password, db_admin_username, db_host, db_port):
-	importer = import_mdb(db_file, db_username, db_user_password, db_admin_password, db_admin_username, db_host, db_port)
+	importer = import_mdb(db_file, db_username, db_user_password, db_admin_password, db_admin_username, db_host, db_port, app.config['WORKING_FOLDER'])
 	importer.dump()
 	try:
 		database_name, database_user, detail = importer.import_db()
