@@ -82,7 +82,7 @@
 <script src="{{ p.site_url }}/static/js/jquery.fileupload.js"></script>
 <script>
 $('input[id=fileupload]').change(function() {
-	$('#inputDbFile').val($(this).val());
+	$('#inputDbFile').val($(this).val().replace("C:\\fakepath\\", ""));
 });
 
 $(function () {
@@ -107,7 +107,7 @@ $(function () {
 			var progress = parseInt(data.loaded / data.total * 100, 10);
 			console.log(progress);
 			$('#progress .progress-bar').css('width', progress + '%').attr('aria-valuenow', progress);
-			$('#progress .progress-bar').innerHTML = progress + '%';
+			$('#progress .progress-bar').text(progress + '%');
 		}
     });
 });

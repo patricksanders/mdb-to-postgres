@@ -25,16 +25,18 @@ import traceback
 import uuid
 
 class import_mdb:
-	_database_name = None
-	_mdb_path = None
-	_user_password = None
-	_database_user = None
 	_admin_password = None
 	_admin_user = None
+	_backup_database_name = None
 	_database_host = None
+	_database_name = None
 	_database_port = None
+	_database_user = None
 	_finished = False
+	_mdb_path = None
+	_backup_database_name = None
 	_replacements = []
+	_user_password = None
 	_uuid = None
 	_working_dir = None
 	schema_sql_filename = None
@@ -65,6 +67,20 @@ class import_mdb:
 		self._working_dir = working_dir
 		self._uuid = uuid.uuid4()
 	
+	def cancel(self):
+		self.log('Canceling...')
+		if self._backup_database_name:
+			try:
+				self.log('Checking for ' + self._database_name + ' database')
+				cursor.execute('DROP DATABASE ' + self._database_name)
+				self.log('Dropped ' + self._database_name + ' database')
+				cursor.execute('ALTER DATABASE ' + self._backup_database_name + 
+							   ' RENAME TO ' + self._database_name)
+				self.log('Renamed ' + self._backup_database_name + ' database to ' + self._backup_database_name)
+			except psycopg2.ProgrammingError as e:
+				self.log(str(e)) # "database doesn't exist"
+				pass
+
 	def cleanup_schema(self, text, terms):
 		'''Replace all instances of a list of words with the
 		lowercase of each word
@@ -76,8 +92,10 @@ class import_mdb:
 				# find and replace term with lowercase
 				expression = re.compile(re.escape(term), re.IGNORECASE)
 				text = expression.sub(term.lower(), text)
-				self.log(term + ' replaced with ' + term.lower())
-			return text
+				#self.log(term + ' replaced with ' + term.lower())
+			expression = re.compile(re.escape('BOOL'))
+			text = expression.sub('INTEGER', text)
+			return text + '\n'
 	
 	def dump_tables_to_db(self, tables, cursor):
 		'''Dump each table in mdb to sql file'''
@@ -122,11 +140,11 @@ class import_mdb:
 		date = datetime.datetime.today().strftime('%Y%m%d%H%M')
 
 		try:
-			backup_database_name = self._database_name + '_' + date
+			self._backup_database_name = self._database_name + '_' + date
 			self.log('Checking for old ' + self._database_name + ' database')
 			cursor.execute('ALTER DATABASE ' + self._database_name + 
-						   ' RENAME TO ' + backup_database_name)
-			self.log('Renamed old ' + self._database_name + ' database to ' + backup_database_name)
+						   ' RENAME TO ' + self._backup_database_name)
+			self.log('Renamed old ' + self._database_name + ' database to ' + self._backup_database_name)
 		except psycopg2.ProgrammingError as e:
 			self.log(str(e)) # "database doesn't exist"
 			pass
@@ -202,7 +220,7 @@ class import_mdb:
 		con.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 		cur = con.cursor()
 
-		# Drop old database
+		# Rename old database; create new user and database
 		try:
 			self.prepare_database(cur)
 		except:
@@ -248,11 +266,10 @@ class import_mdb:
 		with open(schema_file, 'w') as f:
 			self.log('Extracting schema...')
 			schema = subprocess.Popen(['mdb-schema', self._mdb_path, 'postgres'],
-									  stdout=subprocess.PIPE).communicate()[0]
+									  stdout=subprocess.PIPE).communicate()[0].split('\n')
 			schema = self.cleanup_schema(schema, self._replacements)
-			expression = re.compile(re.escape('BOOL'))
-			schema = expression.sub('INTEGER', schema)
-			f.write(schema)
+			new_schema = [self.cleanup_schema(line, self._replacements) for line in schema]
+			f.writelines(new_schema)
 			self.log('Schema dumped to ' + schema_file)
 		return schema_file
 

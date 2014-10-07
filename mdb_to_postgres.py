@@ -1,13 +1,13 @@
 from import_mdb import import_mdb
 import os
-import threading
 import traceback
 from flask import Flask, jsonify, redirect, render_template, request, send_from_directory, url_for
+from multiprocessing import Lock, Process
 from werkzeug import secure_filename
 
 importers = {}
-import_lock = threading.Lock()
-importer_thread = threading.Thread()
+import_lock = Lock()
+importer_lock = None
 
 ALLOWED_EXTENSIONS = set(['mdb'])
 
@@ -23,7 +23,7 @@ def index():
 @app.route('/submit', methods=['POST'])
 def submit():
 	global importers
-	global importer_thread
+	global importer_lock
 	raw_filename = request.values.get('inputDbFile')
 	db_filename = secure_filename(raw_filename)
 	db_user_username = request.values.get('inputUser')
@@ -37,8 +37,8 @@ def submit():
 			importer = import_mdb(db_filename, db_user_username, db_user_password, db_admin_password, db_admin_username, db_host, db_port, app.config['WORKING_FOLDER'])
 			uuid = importer.uuid
 			importers[str(uuid)] = importer
-			importer_thread = threading.Thread(target=importer.start_import)
-			importer_thread.start()
+			importer_lock = Process(target=importer.start_import, name=uuid)
+			importer_lock.start()
 			return render_template('submit.html',
 								   p=app.config['TEMPLATE_PARAMS'],
 								   uuid=importer.uuid)
@@ -59,10 +59,8 @@ def importer_status():
 					   finished=importer.finished)
 	except Exception as e:
 		unfriendly = traceback.format_exc()
-		return render_template('error.html',
-							   #error=friendly,
-							   description=unfriendly,
-							   p=app.config['TEMPLATE_PARAMS'])
+		return jsonify(exception=True,
+					   detail=unfriendly)
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):

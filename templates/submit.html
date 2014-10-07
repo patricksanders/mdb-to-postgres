@@ -22,6 +22,10 @@ function checkStatus(){
 		clearTimeout(timeout);
 		$("#header").text("Import complete.").attr("class", "text-success");
 		$("#lead").text("");
+	} else if (data.exception) {
+		clearTimeout(timeout);
+		$("#header").text("Import failed.").attr("class", "text-error");
+		$("#logOutput").text(data.detail);
 	}
   });
 }
