@@ -267,7 +267,6 @@ class import_mdb:
 			self.log('Extracting schema...')
 			schema = subprocess.Popen(['mdb-schema', self._mdb_path, 'postgres'],
 									  stdout=subprocess.PIPE).communicate()[0].split('\n')
-			schema = self.cleanup_schema(schema, self._replacements)
 			new_schema = [self.cleanup_schema(line, self._replacements) for line in schema]
 			f.writelines(new_schema)
 			self.log('Schema dumped to ' + schema_file)
