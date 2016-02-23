@@ -95,6 +95,8 @@ class import_mdb:
 				#self.log(term + ' replaced with ' + term.lower())
 			expression = re.compile(re.escape('BOOL'))
 			text = expression.sub('INTEGER', text)
+			expression = re.compile(re.escape(' NOT NULL'))
+			text = expression.sub('', text)
 			return text + '\n'
 	
 	def dump_tables_to_db(self, tables, cursor):
