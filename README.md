@@ -1,10 +1,19 @@
 ## Install Instructions
 
+* Ensure PostgreSQL is installed and configured
 * Copy mdb-to-postgres folder to destination system
+* Install dependencies
+
+	```
+	pip install -r requirements.txt
+	```
+
 * Fix permissions
 
+	```
 	chown -R www-data:www-data mdb-to-postgres/
 	chmod -R 750 mdb-to-postgres/
+	```
 
 * Add wsgi directives to apache config
 
