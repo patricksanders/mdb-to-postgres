@@ -2,16 +2,16 @@
 ###############################################################################
 # import_mdb
 #
-# Filename:		import_mdb.py
-# Description:	Python module to import an Access MDB file into PostgreSQL
-# Author:		pcs <psanders@ispatechnology.com>
+# Filename:     import_mdb.py
+# Description:  Python module to import an Access MDB file into PostgreSQL
+# Author:       pcs <mail@patricksanders.net>
 #
 # Depends on mdb-tools (in the Debian repos). That's unfortunate.
 #
 # Usage:
 # importer = import_mdb(db_file, db_username, db_user_password, \
-#						db_admin_password, db_admin_username, db_host, \
-#						db_port, working_folder)
+#                       db_admin_password, db_admin_username, db_host, \
+#                       db_port, working_folder)
 # importer.start_import()
 ###############################################################################
 
