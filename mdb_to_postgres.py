@@ -15,10 +15,12 @@ app = Flask(__name__)
 app.config.from_object('default_settings')
 importers = {}
 
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     return render_template('form.html',
                            p=app.config['TEMPLATE_PARAMS'])
+
 
 @app.route('/submit', methods=['POST'])
 def submit():
@@ -34,7 +36,15 @@ def submit():
     db_port = request.values.get('inputPort')
     with import_lock:
         try:
-            importer = import_mdb(db_filename, db_user_username, db_user_password, db_admin_password, db_admin_username, db_host, db_port, app.config['WORKING_FOLDER'])
+            importer = import_mdb(
+                db_filename,
+                db_user_username,
+                db_user_password,
+                db_admin_password,
+                db_admin_username,
+                db_host,
+                db_port,
+                app.config['WORKING_FOLDER'])
             uuid = importer.uuid
             importers[str(uuid)] = importer
             importer_lock = Process(target=importer.start_import, name=uuid)
@@ -45,9 +55,10 @@ def submit():
         except Exception as e:
             unfriendly = traceback.format_exc()
             return render_template('error.html',
-                                   #error=friendly,
+                                   # error=friendly,
                                    description=unfriendly,
                                    p=app.config['TEMPLATE_PARAMS'])
+
 
 @app.route('/_status')
 def importer_status():
@@ -62,9 +73,11 @@ def importer_status():
         return jsonify(exception=True,
                        detail=unfriendly)
 
+
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
     return send_from_directory(app.config['WORKING_FOLDER'], filename)
+
 
 @app.route('/upload', methods=['POST'])
 def upload():
@@ -77,11 +90,28 @@ def upload():
     else:
         return 'nope', 500
 
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
-def start_import(db_file, db_username, db_user_password, db_admin_password, db_admin_username, db_host, db_port):
-    importer = import_mdb(db_file, db_username, db_user_password, db_admin_password, db_admin_username, db_host, db_port, app.config['WORKING_FOLDER'])
+
+def start_import(
+        db_file,
+        db_username,
+        db_user_password,
+        db_admin_password,
+        db_admin_username,
+        db_host,
+        db_port):
+    importer = import_mdb(
+        db_file,
+        db_username,
+        db_user_password,
+        db_admin_password,
+        db_admin_username,
+        db_host,
+        db_port,
+        app.config['WORKING_FOLDER'])
     try:
         database_name, database_user, detail = importer.start_import()
         overview = 'Database ' + database_name + ' created with owner ' + database_user
@@ -91,4 +121,3 @@ def start_import(db_file, db_username, db_user_password, db_admin_password, db_a
 
 if __name__ == '__main__':
     app.run()
-

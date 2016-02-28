@@ -1,13 +1,13 @@
 #!/usr/bin/python
 ###############################################################################
 # import_mdb
-# 
+#
 # Filename:		import_mdb.py
 # Description:	Python module to import an Access MDB file into PostgreSQL
 # Author:		pcs <psanders@ispatechnology.com>
-# 
+#
 # Depends on mdb-tools (in the Debian repos). That's unfortunate.
-# 
+#
 # Usage:
 # importer = import_mdb(db_file, db_username, db_user_password, \
 #						db_admin_password, db_admin_username, db_host, \
@@ -23,6 +23,7 @@ import subprocess
 import sys
 import traceback
 import uuid
+
 
 class import_mdb:
     _admin_password = None
@@ -55,7 +56,16 @@ class import_mdb:
     def uuid(self):
         return self._uuid
 
-    def __init__(self, mdb_path, db_user_username, db_user_password, db_admin_password, db_admin_username, db_host, db_port, working_dir):
+    def __init__(
+            self,
+            mdb_path,
+            db_user_username,
+            db_user_password,
+            db_admin_password,
+            db_admin_username,
+            db_host,
+            db_port,
+            working_dir):
         # assign values to instance variables
         self._mdb_path = os.path.abspath(os.path.join(working_dir, mdb_path))
         self._user_password = db_user_password
@@ -74,18 +84,23 @@ class import_mdb:
                 self.log('Checking for ' + self._database_name + ' database')
                 cursor.execute('DROP DATABASE ' + self._database_name)
                 self.log('Dropped ' + self._database_name + ' database')
-                cursor.execute('ALTER DATABASE ' + self._backup_database_name + 
+                cursor.execute('ALTER DATABASE ' + self._backup_database_name +
                                ' RENAME TO ' + self._database_name)
-                self.log('Renamed ' + self._backup_database_name + ' database to ' + self._backup_database_name)
+                self.log(
+                    'Renamed ' +
+                    self._backup_database_name +
+                    ' database to ' +
+                    self._backup_database_name)
             except psycopg2.ProgrammingError as e:
-                self.log(str(e)) # "database doesn't exist"
+                self.log(str(e))  # "database doesn't exist"
                 pass
 
     def cleanup_schema(self, text, terms):
         '''Replace all instances of a list of words with the
         lowercase of each word
         '''
-        if text.startswith('ALTER TABLE') or text.startswith('CREATE INDEX') or text.startswith('CREATE UNIQUE INDEX'):
+        if text.startswith('ALTER TABLE') or text.startswith(
+                'CREATE INDEX') or text.startswith('CREATE UNIQUE INDEX'):
             return '\n'
         else:
             for term in terms:
@@ -104,11 +119,24 @@ class import_mdb:
         table_files = []
         for table in tables:
             if table != '':
-                filename = os.path.abspath(os.path.join(self._working_dir, 'table_' + table.lower() + '.sql'))
+                filename = os.path.abspath(
+                    os.path.join(
+                        self._working_dir,
+                        'table_' +
+                        table.lower() +
+                        '.sql'))
                 table_files = table_files + [filename]
                 self.log('Dumping ' + table + ' table...')
-                command = ['mdb-export', '-I', 'postgres', '-q', "'", self._mdb_path, table.lower()]
-                insert_statements = subprocess.Popen(command, stdout=subprocess.PIPE).communicate()[0].strip().split('\n')
+                command = [
+                    'mdb-export',
+                    '-I',
+                    'postgres',
+                    '-q',
+                    "'",
+                    self._mdb_path,
+                    table.lower()]
+                insert_statements = subprocess.Popen(
+                    command, stdout=subprocess.PIPE).communicate()[0].strip().split('\n')
                 [self.run_insert(line, cursor) for line in insert_statements]
 
     def get_replacements(self):
@@ -144,36 +172,47 @@ class import_mdb:
         try:
             self._backup_database_name = self._database_name + '_' + date
             self.log('Checking for old ' + self._database_name + ' database')
-            cursor.execute('ALTER DATABASE ' + self._database_name + 
+            cursor.execute('ALTER DATABASE ' + self._database_name +
                            ' RENAME TO ' + self._backup_database_name)
-            self.log('Renamed old ' + self._database_name + ' database to ' + self._backup_database_name)
+            self.log(
+                'Renamed old ' +
+                self._database_name +
+                ' database to ' +
+                self._backup_database_name)
         except psycopg2.ProgrammingError as e:
-            self.log(str(e)) # "database doesn't exist"
+            self.log(str(e))  # "database doesn't exist"
             pass
 
         # Create user to own database
         try:
-            cursor.execute('CREATE USER ' + self._database_user + 
+            cursor.execute('CREATE USER ' + self._database_user +
                            ' WITH PASSWORD \'' + self._user_password + '\'')
             self.log('Created user ' + self._database_user)
         except psycopg2.ProgrammingError as e:
-            cursor.execute('ALTER USER ' + self._database_user + 
+            cursor.execute('ALTER USER ' + self._database_user +
                            ' WITH PASSWORD \'' + self._user_password + '\'')
             self.log('Changed password for user ' + self._database_user)
 
         # Create database
         try:
-            cursor.execute('CREATE DATABASE ' + self._database_name + 
+            cursor.execute('CREATE DATABASE ' + self._database_name +
                            ' OWNER ' + self._database_user)
-            self.log('Created database ' + self._database_name + ' with owner ' + self._database_user)
+            self.log(
+                'Created database ' +
+                self._database_name +
+                ' with owner ' +
+                self._database_user)
         except psycopg2.ProgrammingError as e:
             self.log('Uh oh! ' + str(e))
             self.log(traceback.format_exc())
 
         # Grant privileges to user
         try:
-            cursor.execute('GRANT ALL PRIVILEGES ON DATABASE ' + self._database_name + 
-                           ' TO ' + self._database_user)
+            cursor.execute(
+                'GRANT ALL PRIVILEGES ON DATABASE ' +
+                self._database_name +
+                ' TO ' +
+                self._database_user)
         except psycopg2.ProgrammingError as e:
             self.log('Uh oh! ' + str(e))
             self.log(traceback.format_exc())
@@ -197,7 +236,8 @@ class import_mdb:
             self.log('Uh oh! ' + str(e))
             self.log(traceback.format_exc())
         except psycopg2.IntegrityError as e:
-            # thrown if there's a problem with duplicate primary keys or other constraints
+            # thrown if there's a problem with duplicate primary keys or other
+            # constraints
             self.log('Uh oh! ' + str(e))
             self.log(traceback.format_exc())
 
@@ -217,7 +257,7 @@ class import_mdb:
                                    host=self._database_host,
                                    port=self._database_port,
                                    password=self._admin_password)
-        except psycopg2.OperationalError as e: # thrown on bad password, maybe other things?
+        except psycopg2.OperationalError as e:  # thrown on bad password, maybe other things?
             raise
         con.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
         cur = con.cursor()
@@ -264,13 +304,22 @@ class import_mdb:
         return self._database_name, self._database_user, self.log_output
 
     def write_schema_to_sql(self):
-        schema_file = os.path.abspath(os.path.join(self._working_dir, 'schema_' + self._database_name + '.sql'))
+        schema_file = os.path.abspath(
+            os.path.join(
+                self._working_dir,
+                'schema_' +
+                self._database_name +
+                '.sql'))
         with open(schema_file, 'w') as f:
             self.log('Extracting schema...')
-            schema = subprocess.Popen(['mdb-schema', self._mdb_path, 'postgres'],
+            schema = subprocess.Popen(['mdb-schema',
+                                       self._mdb_path,
+                                       'postgres'],
                                       stdout=subprocess.PIPE).communicate()[0].split('\n')
-            new_schema = [self.cleanup_schema(line, self._replacements) for line in schema]
+            new_schema = [
+                self.cleanup_schema(
+                    line,
+                    self._replacements) for line in schema]
             f.writelines(new_schema)
             self.log('Schema dumped to ' + schema_file)
         return schema_file
-
